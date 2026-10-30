@@ -56,25 +56,44 @@ export default function AuthForm({ mode, next }: AuthFormProps) {
     setFieldErrors({});
 
     const input = Object.fromEntries(new FormData(event.currentTarget));
-    const result = isRegister
-      ? registerSchema.safeParse(input)
-      : loginSchema.safeParse(input);
 
-    if (!result.success) {
-      setFieldErrors(z.flattenError(result.error).fieldErrors);
-      return;
-    }
+    if (isRegister) {
+      const result = registerSchema.safeParse(input);
+      if (!result.success) {
+        setFieldErrors(z.flattenError(result.error).fieldErrors);
+        return;
+      }
 
-    setPending(true);
-    const { error } =
-      "name" in result.data
-        ? await authClient.signUp.email(result.data)
-        : await authClient.signIn.email(result.data);
+      setPending(true);
+      const { error } = await authClient.signUp.email({
+        email: String(result.data.email),
+        password: String(result.data.password),
+        name: String((result.data as Record<string, unknown>).name ?? ""),
+      });
 
-    if (error) {
-      setPending(false);
-      setFormError(error.message ?? "Something went wrong. Please try again.");
-      return;
+      if (error) {
+        setPending(false);
+        setFormError(error.message ?? "Something went wrong. Please try again.");
+        return;
+      }
+    } else {
+      const result = loginSchema.safeParse(input);
+      if (!result.success) {
+        setFieldErrors(z.flattenError(result.error).fieldErrors);
+        return;
+      }
+
+      setPending(true);
+      const { error } = await authClient.signIn.email({
+        email: String(result.data.email),
+        password: String(result.data.password),
+      });
+
+      if (error) {
+        setPending(false);
+        setFormError(error.message ?? "Something went wrong. Please try again.");
+        return;
+      }
     }
 
     router.replace(next ?? "/login");
