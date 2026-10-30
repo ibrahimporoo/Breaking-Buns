@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import AddToCartButton from "@/components/cart/AddToCartButton";
 import Container from "@/components/ui/Container";
